@@ -1,8 +1,10 @@
 {
+  "name": "lookbook-backend",
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-  "start": "node server.js"
-},
-
+    "start": "node server.js"
+  },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.6",
@@ -10,5 +12,4 @@
     "express": "^5.2.1",
     "mongoose": "^9.3.0"
   }
-  
 }
