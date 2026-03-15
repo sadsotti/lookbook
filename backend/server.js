@@ -52,12 +52,21 @@ app.get('/api/history', async (req, res) => {
 });
 
 app.post('/api/evaluate', async (req, res) => {
+  console.log("INCOMING REQUEST FROM FRONTEND!");
+
   try {
     const { imageBase64, category, brand, condition, userId } = req.body;
-    if (!userId || !imageBase64) return res.status(400).json({ error: "User ID and Image are required" });
+    
+    console.log(`User: ${userId} | Category: ${category} | Brand: ${brand}`);
+    console.log(`Image Size: ${imageBase64 ? imageBase64.length : 'NO IMAGE'}`);
+
+    if (!userId || !imageBase64) {
+      console.log("ERROR: Missing User ID or Image");
+      return res.status(400).json({ error: "User ID and Image are required" });
+    }
 
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       systemInstruction: SYSTEM_PROMPT
     });
 
@@ -66,12 +75,15 @@ app.post('/api/evaluate', async (req, res) => {
       inlineData: { data: imageBase64.split(',')[1], mimeType: "image/jpeg" }
     }];
 
+    console.log("Sending image to Gemini AI...");
     const result = await model.generateContent([userMessage, ...imageParts]);
     let responseText = result.response.text();
     responseText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
     
+    console.log("Received response from Gemini. Parsing JSON...");
     const evaluationData = JSON.parse(responseText);
 
+    console.log("Saving to MongoDB...");
     const newEvaluation = new Evaluation({
       userId, category, brand, condition,
       imagePreview: imageBase64,
@@ -79,9 +91,17 @@ app.post('/api/evaluate', async (req, res) => {
     });
 
     const savedEvaluation = await newEvaluation.save();
+    console.log("Successfully saved and returning to frontend!");
     res.status(201).json(savedEvaluation);
+
   } catch (error) {
-    res.status(500).json({ error: "Error during analysis" });
+    console.error("CRITICAL BACKEND ERROR: (I'm going crazy! :D)", error);
+    
+    res.status(500).json({ 
+      error: "Error during analysis",
+      real_reason: error.message,
+      stack: error.stack
+    });
   }
 });
 
