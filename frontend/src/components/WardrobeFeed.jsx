@@ -38,7 +38,9 @@ export default function WardrobeFeed({ history, userEmail, loading }) {
                   </div>
                   <div className="text-right">
                     <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide block mb-1">Suggested Price</span>
-                    <span className="text-3xl font-black tracking-tight text-gray-900">€{item.evaluation.suggested_price}</span>
+                    <span className="text-3xl font-black tracking-tight text-gray-900">
+                      €{item.evaluation?.suggested_price || 'N/A'}
+                    </span>
                   </div>
                 </div>
                 
@@ -46,28 +48,32 @@ export default function WardrobeFeed({ history, userEmail, loading }) {
                   <span className="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
                   <span className="text-xs font-medium text-gray-600 capitalize">Condition: {item.condition}</span>
                   <span className="text-gray-300">|</span>
-                  <span className="text-xs font-medium text-gray-600">Range: €{item.evaluation.range.min} - €{item.evaluation.range.max}</span>
+                  <span className="text-xs font-medium text-gray-600">
+                    Range: €{item.evaluation?.range?.min || '?'} - €{item.evaluation?.range?.max || '?'}
+                  </span>
                 </div>
 
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   <strong className="text-gray-900 font-semibold block mb-1">Why this price?</strong>
-                  {item.evaluation.motivation}
+                  {item.evaluation?.motivation || 'Evaluation pending or failed.'}
                 </p>
               </div>
 
-              <div className="bg-[#f8f9fa] rounded-xl p-4 border border-gray-100">
-                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <span>💡</span> Selling Tips
-                </h4>
-                <ul className="space-y-1.5">
-                  {item.evaluation.selling_tips.map((tip, idx) => (
-                    <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="text-gray-300 mt-0.5">•</span>
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              {item.evaluation?.selling_tips && item.evaluation.selling_tips.length > 0 && (
+                <div className="bg-[#f8f9fa] rounded-xl p-4 border border-gray-100">
+                  <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-2 flex items-center gap-2">
+                    <span>💡</span> Selling Tips
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {item.evaluation.selling_tips.map((tip, idx) => (
+                      <li key={idx} className="text-sm text-gray-600 flex items-start gap-2">
+                        <span className="text-gray-300 mt-0.5">•</span>
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         ))}
