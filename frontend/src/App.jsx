@@ -90,18 +90,12 @@ function App() {
   };
 
   const handleEvaluate = async () => {
-  console.log("CONTROLLO DATI PRIMA DI PARTIRE:");
-  console.log("Email Utente:", userEmail);
-  console.log("Immagine presente?:", formData.imageBase64 ? "SÌ" : "NO");
+    if (!userEmail || !formData.imageBase64) {
+      return showToast("User ID and Image are required.", "error");
+    }
 
-  if (!userEmail || !formData.imageBase64) {
-    return showToast("Manca l'email o l'immagine! Controlla i log.", "error");
-  }
-
-  setLoading(true);
-    
+    setLoading(true);
     const payload = { ...formData, userId: userEmail };
-    console.log("SENDING DATA:", payload); 
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/evaluate`, {
@@ -120,7 +114,6 @@ function App() {
       setFormData({ category: '', brand: '', condition: 'good', imageBase64: '' });
       showToast("Evaluated!");
     } catch (err) {
-      console.error("Fetch error:", err);
       showToast(err.message, "error");
     } finally {
       setLoading(false);
