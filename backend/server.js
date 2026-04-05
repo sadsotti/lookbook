@@ -15,7 +15,7 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '20mb' }));
+app.use(express.json({ limit: '20mb', type: '*/*' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 let isConnected = false;
@@ -35,22 +35,35 @@ app.post('/api/evaluate', async (req, res) => {
   try {
     await connectDB();
 
-    let data = req.body;
-    if (!data || Object.keys(data).length === 0) {
-      const event = req.netlifyEvent; 
+    let data = req.body || {};
+
+    if (Object.keys(data).length === 0) {
+      const event = req.netlifyEvent;
       if (event && event.body) {
-        const rawBody = event.isBase64Encoded 
-          ? Buffer.from(event.body, 'base64').toString('utf8') 
-          : event.body;
-        data = JSON.parse(rawBody);
+        if (typeof event.body === 'string') {
+          try {
+            const rawBody = event.isBase64Encoded 
+              ? Buffer.from(event.body, 'base64').toString('utf8') 
+              : event.body;
+            data = JSON.parse(rawBody);
+          } catch (e) {
+            console.error("JSON Parse fallback error");
+          }
+        } else if (typeof event.body === 'object') {
+          data = event.body;
+        }
       }
     }
 
-    const { imageBase64, category, brand, condition, userId } = data || {};
+    const { imageBase64, category, brand, condition, userId } = data;
 
     if (!userId || !imageBase64) {
+      const eventStatus = req.netlifyEvent ? 'PRESENTE' : 'ASSENTE';
+      const bodyType = req.netlifyEvent && req.netlifyEvent.body ? typeof req.netlifyEvent.body : 'N/A';
+      const isBase64 = req.netlifyEvent ? req.netlifyEvent.isBase64Encoded : 'N/A';
+      
       return res.status(400).json({ 
-        error: "User ID and Image are required - Impossibile estrarre i dati su Netlify"
+        error: `Netlify Block! Evento: ${eventStatus} | Tipo Body: ${bodyType} | Base64: ${isBase64}` 
       });
     }
 
@@ -102,7 +115,7 @@ app.get('/api/history', async (req, res) => {
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(3000, () => console.log('Local Server: http://localhost:3000'));
+  app.listen(3000);
 }
 
 export const handler = serverless(app, {
