@@ -35,32 +35,22 @@ app.post('/api/evaluate', async (req, res) => {
   try {
     await connectDB();
 
-    let data = {};
-    try {
-      if (typeof req.body === 'string') {
-        data = JSON.parse(req.body);
-      } else if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
-        data = req.body;
-      } else {
-        const event = req.apiGateway?.event || req.event || {};
-        if (event.body) {
-          const rawBody = event.isBase64Encoded 
-            ? Buffer.from(event.body, 'base64').toString('utf8') 
-            : event.body;
-          data = JSON.parse(rawBody);
-        }
+    let data = req.body;
+    if (!data || Object.keys(data).length === 0) {
+      const event = req.netlifyEvent; 
+      if (event && event.body) {
+        const rawBody = event.isBase64Encoded 
+          ? Buffer.from(event.body, 'base64').toString('utf8') 
+          : event.body;
+        data = JSON.parse(rawBody);
       }
-    } catch (parseError) {
-      return res.status(400).json({ error: "Invalid JSON format" });
     }
 
     const { imageBase64, category, brand, condition, userId } = data || {};
 
     if (!userId || !imageBase64) {
       return res.status(400).json({ 
-        error: "User ID and Image are required",
-        debug_type: typeof req.body,
-        debug_keys: Object.keys(data)
+        error: "User ID and Image are required - Impossibile estrarre i dati su Netlify"
       });
     }
 
@@ -112,7 +102,11 @@ app.get('/api/history', async (req, res) => {
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(3000);
+  app.listen(3000, () => console.log('Local Server: http://localhost:3000'));
 }
 
-export const handler = serverless(app);
+export const handler = serverless(app, {
+  request: (req, event) => {
+    req.netlifyEvent = event;
+  }
+});
